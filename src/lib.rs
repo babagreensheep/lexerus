@@ -93,7 +93,7 @@ mod lexer;
 mod tests;
 mod token;
 
-pub use buffer::{Buffer, Searchable};
+pub use buffer::Buffer;
 pub use error::{Error, Kind};
 #[cfg(feature = "helpers")]
 pub use helpers::*;

@@ -1,5 +1,5 @@
 //! Whitespace markers
-use crate::{Buffer, Lexer, Searchable, Token};
+use crate::{Buffer, Lexer, Token};
 use std::fmt::Display;
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};

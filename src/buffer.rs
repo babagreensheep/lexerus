@@ -5,17 +5,6 @@ use std::ops::Range;
 #[cfg(test)]
 mod tests;
 
-/// Marks a [Buffer] with the core traits that [lexerus_derive::Lexer] uses when decorating a
-/// lexer.
-pub trait Searchable
-where
-    Self: Sized,
-{
-    fn eat_word(&mut self, word: &str) -> Option<Self>;
-    fn advance_char(&mut self, by: usize) -> Option<Self>;
-    fn search_len(&self) -> usize;
-}
-
 #[derive(PartialEq, Clone)]
 /// [Buffer] is a container for source code. It is represented as an `enum` because there are two
 /// forms of [Buffer] which can be created:
@@ -164,8 +153,8 @@ impl<'code> Buffer<'code> {
     }
 }
 
-impl<'code> Searchable for Buffer<'code> {
-    fn eat_word(&mut self, word: &str) -> Option<Self> {
+impl<'code> Buffer<'code> {
+    pub fn eat_word(&mut self, word: &str) -> Option<Self> {
         match self {
             Buffer::Cont { chunk } => chunk
                 .eat_word(word)
@@ -220,7 +209,10 @@ impl<'code> Searchable for Buffer<'code> {
         }
     }
 
-    fn advance_char(&mut self, by: usize) -> Option<Self> {
+    pub fn advance_char(
+        &mut self,
+        by: usize,
+    ) -> Option<Self> {
         match self {
             Buffer::Cont { chunk } => chunk
                 .advance_char(by)
@@ -275,7 +267,7 @@ impl<'code> Searchable for Buffer<'code> {
         }
     }
 
-    fn search_len(&self) -> usize {
+    pub fn search_len(&self) -> usize {
         match self {
             Self::Cont { chunk } => chunk.search_len(),
             Self::Frag(lhs, rhs) => {
@@ -352,7 +344,7 @@ impl<'code> std::fmt::Display for Chunk<'code> {
     }
 }
 
-impl<'code> Searchable for Chunk<'code> {
+impl<'code> Chunk<'code> {
     fn eat_word(&mut self, word: &str) -> Option<Self> {
         self.search_str()?
             .starts_with(word)
