@@ -40,7 +40,6 @@
 //!     panic!("expected trex");
 //! }
 //! ```
-//!
 //! ```
 //! # use lexerus::*;
 //!
