@@ -1,5 +1,4 @@
 use common::*;
-use lexerus::Searchable;
 mod common;
 
 #[derive(Lexer, Token, Debug)]

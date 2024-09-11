@@ -1,5 +1,3 @@
-// use crate as lexerus;
-// use crate::buffer::Searchable;
 use crate::*;
 
 #[derive(Lexer, Token, Debug)]

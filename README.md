@@ -41,7 +41,6 @@ else {
     panic!("expected trex");
 }
 ```
-
 ```rust
 
 // Create and decorate a struct

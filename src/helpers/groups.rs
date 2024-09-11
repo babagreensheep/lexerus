@@ -6,19 +6,15 @@ use crate::*;
 use ::std::marker::PhantomData;
 
 #[derive(Clone)]
-/// Helper to capture up to a whole amount of
-/// matching `Capture` without the memory
-/// allocation of [Vec]. Unlike [GroupUntil],
-/// this structure does not check for an
-/// end token. The const `NUM` is used to
-/// specify the number of minimum matches
-/// (0: infinite)
+/// Captures a group of _contiguous_ `Capture`. Unlike [GroupUntil], this structure does not check
+/// for an end token.
 ///
-/// **Warning**: This does
-/// **not** check for escaped returns, i.e.
-/// the caller is responsible for ensuring
-/// that `Capture` eats escaped
-/// characters.
+/// **Fails*:
+/// - Requisite `NUM` of `Capture` not met.
+///
+/// The `Capture` is _not allocated_ which means that the [Buffer] is not split out into individual [Buffer]s. Use only if `Capture` does not need to be individually parsed, for example in a string of characters.
+///
+/// **Warning**: Caller is responsible for checking for escaped `Capture`
 pub struct Group<'code, Capture, const NUM: usize> {
     buffer: Option<Buffer<'code>>,
     _captured: PhantomData<Capture>,
@@ -108,14 +104,13 @@ where
 }
 
 #[derive(Clone)]
-/// Helper to capture up to a certain amount
-/// of text up until `End`.
+/// Captures a group of _contiguous_ `Capture` until  `End` is found.
 ///
-/// **Warning**: This does
-/// **not** check for escaped returns, i.e.
-/// the caller is responsible for ensuring
-/// that `Capture` eats escaped
-/// characters.
+/// **Fails*:
+/// - Buffer is unable to match any more `Capture` but is also unable to match `End`; **or**
+/// - Requisite `NUM` of `Capture` not met.
+///
+/// The `Capture` is _not allocated_ which means that the [Buffer] is not split out into individual [Buffer]s. Use only if `Capture` does not need to be individually parsed, for example in a string of characters.
 pub struct GroupUntil<'code, Capture, End, const NUM: usize>
 {
     buffer: Option<Buffer<'code>>,
@@ -221,12 +216,14 @@ where
 }
 
 #[derive(Debug, Clone)]
-/// Captures a **unallocated** [Group] bookended by the
-/// `Start` and `End` types. The `Capture` is **not
-/// allocated** which means that the [Buffer] is not split
-/// out into individual [Buffer]s. Use only if `Capture`
-/// does not need to be individuall parsed, for example in a
-/// string of characters..
+/// Captures a group of _contiguous_ `Capture` bookended by the `Start` and `End` types.
+///
+/// **Fails*:
+/// - No `Start` is found; **or**
+/// - Buffer is unable to match any more `Capture` but is also unable to match `End`; **or**
+/// - Requisite `NUM` of `Capture` not met.
+///
+/// The `Capture` is _not allocated_ which means that the [Buffer] is not split out into individual [Buffer]s. Use only if `Capture` does not need to be individually parsed, for example in a string of characters.
 pub struct GroupBookEnd<
     'code,
     Start,

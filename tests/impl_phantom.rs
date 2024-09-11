@@ -1,4 +1,3 @@
-use lexerus::Searchable;
 use std::marker::PhantomData;
 
 use common::*;
