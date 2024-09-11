@@ -15,6 +15,9 @@ description = "Simple annotated lexer"
 repository = "https://github.com/babagreensheep/lexerus"
 readme = "README.md"
 
+[package.metadata.docs.rs]
+all-features = true
+
 [dependencies]
 lexerus_derive = { path = "derive", version = "0.1.0" }
 
