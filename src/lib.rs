@@ -22,6 +22,30 @@
 //!
 //! // Create and decorate a struct
 //! #[derive(Lexer, Token, Debug)]
+//! enum Trex<'code> {
+//!     Trex(#[pattern = "rawr"] Buffer<'code>),
+//!     Other(#[pattern = "meow"] Buffer<'code>),
+//! };
+//!
+//! // Create a raw buffe
+//! let mut buffer = Buffer::from("rawr");
+//!
+//! // Attempt to parse the trex
+//! let trex_calling = Trex::lex(&mut buffer).unwrap();
+//!
+//! if let Trex::Trex(trex_calling) = trex_calling {
+//!     assert_eq!(trex_calling.to_string(), "rawr");
+//! }
+//! else {
+//!     panic!("expected trex");
+//! }
+//! ```
+//!
+//! ```
+//! # use lexerus::*;
+//!
+//! // Create and decorate a struct
+//! #[derive(Lexer, Token, Debug)]
 //! struct Trex<'code>(#[pattern = "trex::"] Buffer<'code>);
 //!
 //! #[derive(Lexer, Token, Debug)]
