@@ -1,8 +1,12 @@
+//! [Buffer] is a container for either (depending on the context) the parsed string or the unparsed
+//! string.
 use std::ops::Range;
 
 #[cfg(test)]
 mod tests;
 
+/// Marks a [Buffer] with the core traits that [lexerus_derive::Lexer] uses when decorating a
+/// lexer.
 pub trait Searchable
 where
     Self: Sized,
@@ -13,6 +17,10 @@ where
 }
 
 #[derive(PartialEq, Clone)]
+/// [Buffer] is a container for source code. It is represented as an `enum` because there are two
+/// forms of [Buffer] which can be created:
+/// - A _contiguous_ [Chunk] of [str] will always be allocated as a [Buffer::Cont] and make use of the simple [Chunk] container.
+/// - A _fragmented_ [Chunk] will always result in a heap allocation ([Box]) of [Chunk] to join two non-adjacent [Chunk] to each other.
 pub enum Buffer<'code> {
     Cont { chunk: Chunk<'code> },
     Frag(Box<Buffer<'code>>, Box<Buffer<'code>>),
@@ -292,6 +300,7 @@ impl<'code> From<Chunk<'code>> for Buffer<'code> {
 }
 
 #[derive(PartialEq)]
+/// Basic container for [str]. This should never be called by itself.
 pub struct Chunk<'code> {
     code: &'code str,
     range: Range<usize>,

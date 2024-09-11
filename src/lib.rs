@@ -10,7 +10,37 @@
 //!
 //! This library was developed in conjunction with [SPEW](https://github.com/babagreensheep/spew/tree/dev/elves/winky/src) and examples on actual implementation can be found there.
 //!
+//! An annotated `struct` will act as an AND and all tokens must be matched before
+//! [Lexer::lex] returns a valid [Result::Ok]
+//! An annotated `enum` acts as an OR and any of the match arms must be met in order for the
+//! [Lexer::lex] to return a valid [Result::Ok]
+//!
+//!
 //! # Example
+//! ```
+//! # use lexerus::*;
+//!
+//! // Create and decorate a struct
+//! #[derive(Lexer, Token, Debug)]
+//! enum Trex<'code> {
+//!     Trex(#[pattern = "rawr"] Buffer<'code>),
+//!     Other(#[pattern = "meow"] Buffer<'code>),
+//! };
+//!
+//! // Create a raw buffe
+//! let mut buffer = Buffer::from("rawr");
+//!
+//! // Attempt to parse the trex
+//! let trex_calling = Trex::lex(&mut buffer).unwrap();
+//!
+//! if let Trex::Trex(trex_calling) = trex_calling {
+//!     assert_eq!(trex_calling.to_string(), "rawr");
+//! }
+//! else {
+//!     panic!("expected trex");
+//! }
+//! ```
+//!
 //! ```
 //! # use lexerus::*;
 //!
@@ -45,21 +75,9 @@
 //! ```
 //!
 //! # Goals
-//! - No heap allocations when _parsing_. However there are
-//!   some exceptions:
-//!   - When using helpers such as [GroupUntil], a [Vec] is
-//!     allocated to store the parsed [Buffer] in individual
-//!     units. Contrast this with [Group] which only
-//!     captures the [Buffer] output   without individual
-//!     segregation.
-//! - Heap allocations only occur when calling
-//!   [Token::buffer] on _non-contigous_ sections of text or
-//!   _repeated_ sections of text. This is inevitable beause
-//!   different sections [str] have to be stitched together
-//!   and teh only way to do so is with a heap allocation.
-//! - Proper debuggable information, i.e. the [Buffer]
-//!   retains information about its source and the
-//! exact range on the source.
+//! - No heap allocations when _parsing_. However be aware that certain [helpers] may use heap allocations if required.
+//! - Heap allocations only occur when calling [Token::buffer] on _non-contigous_ sections of text or_repeated_ sections of text. This is inevitable beause different sections of  [str] have to be stitched together and the only way to do so is with a heap allocation.
+//! - Proper debuggable information, i.e. the [Buffer] retains information about its source and theexact range on the source. The [Error] which [Lexer::lex] generates contains a clone of the unparsed [Buffer] so that the program can debug where the [Lexer::lex] failed.
 
 // App imports
 pub use lexerus_derive::*;
