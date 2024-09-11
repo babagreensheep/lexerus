@@ -1,4 +1,4 @@
-**Note**: This readme is auto generated. Please refer to the [docs](https://docs.rs/crate/lexerus/latest).
+**Note**: This readme is auto generated. Please refer to the [docs](https://docs.rs/lexerus/latest/lexerus).
 
 # Lexerus
 Lexerus is a **lexer** dinosaur that consumes a [Buffer]
