@@ -32,7 +32,7 @@ pub enum WhiteSpace<'code> {
     NewLine(NewLine<'code>),
 }
 
-/// Unallocated [parse::Group] of [WhiteSpace].
+/// Unallocated [crate::Group] of [WhiteSpace].
 /// This can probably be used in the context of
 /// breaking up `SYMBOL [WhiteSpaces] SYMBOL` in
 /// complex chains.

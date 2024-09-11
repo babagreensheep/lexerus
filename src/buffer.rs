@@ -19,8 +19,8 @@ where
 #[derive(PartialEq, Clone)]
 /// [Buffer] is a container for source code. It is represented as an `enum` because there are two
 /// forms of [Buffer] which can be created:
-/// - A _contiguous_ [Chunk] of [str] will always be allocated as a [Buffer::Cont] and make use of the simple [Chunk] container.
-/// - A _fragmented_ [Chunk] will always result in a heap allocation ([Box]) of [Chunk] to join two non-adjacent [Chunk] to each other.
+/// - A _contiguous_ chunk of [str] will always be allocated as a [Buffer::Cont] and make use of the simple chunk container.
+/// - A _fragmented_ chunk will always result in a heap allocation ([Box]) of chunk to join two non-adjacent chunks to each other.
 pub enum Buffer<'code> {
     Cont { chunk: Chunk<'code> },
     Frag(Box<Buffer<'code>>, Box<Buffer<'code>>),
