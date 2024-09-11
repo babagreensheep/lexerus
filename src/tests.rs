@@ -3,6 +3,7 @@ use super::*;
 const INFO: &str = "[\x1b[32mINFO \x1b[0m]";
 const ERROR: &str = "[\x1b[31mERROR\x1b[0m]";
 
+/// Test harness for tokens.
 pub struct TestBuild<'code, Capture>
 where
     Capture: Lexer<'code>,
@@ -16,6 +17,7 @@ impl<'code, Capture> TestBuild<'code, Capture>
 where
     Capture: Lexer<'code> + std::fmt::Debug,
 {
+    /// Create a new test harness to parse the supplied code.
     pub fn new(code: &'code str) -> Self {
         Self {
             original_code: code,
@@ -38,6 +40,8 @@ where
         <Capture as Lexer>::lex(buffer)
     }
 
+    /// Telegraphs to the harness that you expect a failure. Returns a function that can be called
+    /// with a callback to examine the [Result::Err].
     pub fn fail(
         self,
     ) -> impl FnOnce(fn(Buffer<'code>, Error<'code>)) {
@@ -51,6 +55,8 @@ where
         }
     }
 
+    /// Telegraphs to the harness that you expect a pass. Returns a function that can be called
+    /// with a callback to examine the [Result::Ok]
     pub fn pass(
         self,
         success: Option<&str>,

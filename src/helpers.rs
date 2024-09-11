@@ -1,3 +1,5 @@
+//! Various helper structs to assist with parsing so that you don't have to hand roll them.
+//! Feature gated under `helpers`
 mod infix;
 pub use infix::*;
 mod not;
