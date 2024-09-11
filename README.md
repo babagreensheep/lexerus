@@ -1,6 +1,6 @@
-# Docs
-This readme is auto generated. Please refer to the docs.
+**Note**: This readme is auto generated. Please refer to the [docs](https://docs.rs/lexerus/0.1.0/lexerus/).
 
+# Lexerus
 Lexerus is a **lexer** dinosaur that consumes a [Buffer]
 constructed from [str] and spits out a structure through
 the [lexer::Lexer::lex] call.
