@@ -1,6 +1,6 @@
 [package]
 name = "lexerus"
-version = "0.1.0"
+version = "0.1.2"
 edition = "2021"
 license-file = "LICENCE"
 keywords = ["lexer", "tokenizer", "tokeniser"]
@@ -14,6 +14,9 @@ categories = [
 description = "Simple annotated lexer"
 repository = "https://github.com/babagreensheep/lexerus"
 readme = "README.md"
+
+[package.metadata.docs.rs]
+all-features = true
 
 [dependencies]
 lexerus_derive = { path = "derive", version = "0.1.0" }
