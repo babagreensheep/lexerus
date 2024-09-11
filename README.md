@@ -5,9 +5,9 @@ Lexerus is a **lexer** dinosaur that consumes a [Buffer]
 constructed from [str] and spits out a structure through
 the [lexer::Lexer::lex] call.
 
-This library uses the [lexer_derive::Token] and
-[lexer_derive::Lexer] macros to decorate a structure for
-automatic parsing. See those macros for additional
+This library uses the [lexerus_derive::Token] and
+[lexerus_derive::Lexer] macros to decorate a structure
+for automatic parsing. See those macros for additional
 options.
 
 This library was developed in conjunction with [SPEW](https://github.com/babagreensheep/spew/tree/dev/elves/winky/src) and examples on actual implementation can be found there.
