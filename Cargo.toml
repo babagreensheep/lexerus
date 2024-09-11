@@ -1,0 +1,27 @@
+[package]
+name = "lexerus"
+version = "0.1.0"
+edition = "2021"
+license-file = "LICENCE"
+keywords = ["lexer", "tokenizer", "tokeniser"]
+categories = [
+  "compilers",
+  "parser-implementations",
+  "parsing",
+  "text-processing",
+  "web-programming",
+]
+description = "Simple annotated lexer"
+repository = "https://github.com/babagreensheep/lexerus"
+readme = "README.md"
+
+[dependencies]
+lexerus_derive = { path = "derive", version = "0.1.0" }
+
+[dev-dependencies]
+lexerus = { path = ".", features = ["helpers"] }
+
+[features]
+default = ["std"]
+helpers = []
+std = []
