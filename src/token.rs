@@ -1,5 +1,7 @@
 use super::*;
 
+/// Token indicator
+///
 /// Trait indicating that the struct is ready for [Lexer]. This is not included as part of [Lexer]
 /// as there are instances where the user may wish to handroll the [Token] representation. In any
 /// case they refer to distincting things: [Token] represents the outward represntation of the
