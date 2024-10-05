@@ -75,20 +75,23 @@ impl<'code> std::ops::Add for Buffer<'code> {
                 Buffer::Cont { chunk: lhs },
                 Buffer::Frag(r_lhs, r_rhs),
             ) => Self::Frag(
-                Box::new(Buffer::from(lhs) + *r_lhs),
-                r_rhs,
+                Box::new(Buffer::Cont { chunk: lhs }),
+                Box::new(Self::Frag(r_lhs, r_rhs)),
             ),
             (
                 Buffer::Frag(l_lhs, l_rhs),
                 Buffer::Cont { chunk: rhs },
             ) => Self::Frag(
-                l_lhs,
-                Box::new(*l_rhs + Buffer::from(rhs)),
+                Box::new(Buffer::Frag(l_lhs, l_rhs)),
+                Box::new(Buffer::Cont { chunk: rhs }),
             ),
             (
                 Buffer::Frag(l_lhs, l_rhs),
                 Buffer::Frag(r_lhs, r_rhs),
-            ) => *l_lhs + *l_rhs + *r_lhs + *r_rhs,
+            ) => Self::Frag(
+                Box::new(Buffer::Frag(l_lhs, l_rhs)),
+                Box::new(Buffer::Frag(r_lhs, r_rhs)),
+            ),
         }
     }
 }
