@@ -10,7 +10,7 @@ This library uses the [lexerus_derive::Token] and
 for automatic parsing. See those macros for additional
 options.
 
-This library was developed in conjunction with [SPEW](https://github.com/babagreensheep/spew/tree/dev/elves/winky/src) and examples on actual implementation can be found there.
+This library was developed in conjunction with [SPEW](https://github.com/babagreensheep/spew/tree/dev/elves/winky/src) and examples on actual implementation can be found there (although currently private). See also [tdlib_driver](https://github.com/babagreensheep/tdlib_driver) which uses this library (albeit badly).
 
 An annotated `struct` will act as an AND and all tokens must be matched before
 [Lexer::lex] returns a valid [Result::Ok]
