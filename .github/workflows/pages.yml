@@ -20,7 +20,7 @@ jobs:
     - name: Clean docs folder
       run: cargo clean --doc
     - name: Build docs
-      run: cargo doc --no-deps
+      run: cargo doc --no-deps --all-features
     - name: Add redirect
       run: echo '<meta http-equiv="refresh" content="0;url=lexerus/index.html">' > target/doc/index.html
     - name: Remove lock file
