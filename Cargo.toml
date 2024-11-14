@@ -1,6 +1,6 @@
 [package]
 name = "lexerus"
-version = "0.1.7"
+version = "0.1.8"
 edition = "2021"
 license-file = "LICENCE"
 keywords = ["lexer", "tokenizer", "tokeniser"]
