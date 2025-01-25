@@ -1,4 +1,5 @@
 use core::panic;
+use std::hash::{Hash, Hasher};
 
 use super::*;
 
@@ -216,4 +217,284 @@ fn advance_char_fail() {
     if let Some(advanced) = advanced {
         panic!("expected none, found {advanced}")
     }
+}
+
+#[test]
+fn hash_cont_eq() {
+    let buffer0 = Buffer::Cont {
+        chunk: Chunk {
+            code: "hello from the other side",
+            range: 0..15,
+        },
+    };
+    let buffer1 = Buffer::Cont {
+        chunk: Chunk {
+            code: "hello from the other side",
+            range: 0..15,
+        },
+    };
+
+    let hash0 = {
+        let mut hasher = ::std::hash::DefaultHasher::new();
+        buffer0.hash(&mut hasher);
+        hasher.finish()
+    };
+
+    let hash1 = {
+        let mut hasher = ::std::hash::DefaultHasher::new();
+        buffer1.hash(&mut hasher);
+        hasher.finish()
+    };
+
+    assert_eq!(hash0, hash1);
+}
+
+#[test]
+fn has_cont_ne() {
+    let buffer0 = Buffer::Cont {
+        chunk: Chunk {
+            code: "hello from the other side",
+            range: 0..15,
+        },
+    };
+    let buffer1 = Buffer::Cont {
+        chunk: Chunk {
+            code: "hello from the other side",
+            range: 5..15,
+        },
+    };
+
+    let hash0 = {
+        let mut hasher = ::std::hash::DefaultHasher::new();
+        buffer0.hash(&mut hasher);
+        hasher.finish()
+    };
+
+    let hash1 = {
+        let mut hasher = ::std::hash::DefaultHasher::new();
+        buffer1.hash(&mut hasher);
+        hasher.finish()
+    };
+
+    assert_ne!(hash0, hash1);
+}
+
+#[test]
+fn hash_frag_eq() {
+    let code = "this that this that";
+
+    let this0 = Buffer::Cont {
+        chunk: Chunk {
+            code,
+            range: 00..04,
+        },
+    };
+
+    let that0 = Buffer::Cont {
+        chunk: Chunk {
+            code,
+            range: 05..09,
+        },
+    };
+
+    let this1 = Buffer::Cont {
+        chunk: Chunk {
+            code,
+            range: 10..14,
+        },
+    };
+
+    let that1 = Buffer::Cont {
+        chunk: Chunk {
+            code,
+            range: 15..19,
+        },
+    };
+
+    let hash0 = {
+        let buffer =
+            Buffer::Frag(this0.into(), that1.into());
+        let mut hasher = ::std::hash::DefaultHasher::new();
+        buffer.hash(&mut hasher);
+        hasher.finish()
+    };
+
+    let hash1 = {
+        let buffer =
+            Buffer::Frag(this1.into(), that0.into());
+        let mut hasher = ::std::hash::DefaultHasher::new();
+        buffer.hash(&mut hasher);
+        hasher.finish()
+    };
+
+    assert_eq!(hash0, hash1);
+}
+
+#[test]
+fn hash_frag_ne() {
+    let code = "this that this that";
+
+    let this0 = Buffer::Cont {
+        chunk: Chunk {
+            code,
+            range: 00..04,
+        },
+    };
+
+    let _that0 = Buffer::Cont {
+        chunk: Chunk {
+            code,
+            range: 05..09,
+        },
+    };
+
+    let this1 = Buffer::Cont {
+        chunk: Chunk {
+            code,
+            range: 10..14,
+        },
+    };
+
+    let that1 = Buffer::Cont {
+        chunk: Chunk {
+            code,
+            range: 15..19,
+        },
+    };
+
+    let hash0 = {
+        let buffer = Buffer::Frag(
+            this0.clone().into(),
+            that1.clone().into(),
+        );
+        let mut hasher = ::std::hash::DefaultHasher::new();
+        buffer.hash(&mut hasher);
+        hasher.finish()
+    };
+
+    let hash1 = {
+        let buffer = Buffer::Frag(
+            this1.clone().into(),
+            this0.clone().into(),
+        );
+        let mut hasher = ::std::hash::DefaultHasher::new();
+        buffer.hash(&mut hasher);
+        hasher.finish()
+    };
+
+    assert_ne!(hash0, hash1);
+}
+
+#[test]
+fn hash_frag_cont_eq() {
+    let code = "this that this that";
+
+    let this0 = Buffer::Cont {
+        chunk: Chunk {
+            code,
+            range: 00..04,
+        },
+    };
+
+    let _that0 = Buffer::Cont {
+        chunk: Chunk {
+            code,
+            range: 05..09,
+        },
+    };
+
+    let _this1 = Buffer::Cont {
+        chunk: Chunk {
+            code,
+            range: 10..14,
+        },
+    };
+
+    let that1 = Buffer::Cont {
+        chunk: Chunk {
+            code,
+            range: 15..19,
+        },
+    };
+
+    let hash0 = {
+        let buffer = Buffer::Frag(
+            this0.clone().into(),
+            that1.clone().into(),
+        );
+        let mut hasher = ::std::hash::DefaultHasher::new();
+        buffer.hash(&mut hasher);
+        hasher.finish()
+    };
+
+    let hash1 = {
+        let buffer = Buffer::Cont {
+            chunk: Chunk {
+                code: "thisthat",
+                range: 0..8,
+            },
+        };
+        let mut hasher = ::std::hash::DefaultHasher::new();
+        buffer.hash(&mut hasher);
+        hasher.finish()
+    };
+
+    assert_eq!(hash0, hash1);
+}
+
+#[test]
+fn hash_frag_cont_ne() {
+    let code = "this that this that";
+
+    let this0 = Buffer::Cont {
+        chunk: Chunk {
+            code,
+            range: 00..04,
+        },
+    };
+
+    let _that0 = Buffer::Cont {
+        chunk: Chunk {
+            code,
+            range: 05..09,
+        },
+    };
+
+    let _this1 = Buffer::Cont {
+        chunk: Chunk {
+            code,
+            range: 10..14,
+        },
+    };
+
+    let that1 = Buffer::Cont {
+        chunk: Chunk {
+            code,
+            range: 15..19,
+        },
+    };
+
+    let hash0 = {
+        let buffer = Buffer::Frag(
+            this0.clone().into(),
+            that1.clone().into(),
+        );
+        let mut hasher = ::std::hash::DefaultHasher::new();
+        buffer.hash(&mut hasher);
+        hasher.finish()
+    };
+
+    let hash1 = {
+        let buffer = Buffer::Cont {
+            chunk: Chunk {
+                code: "themthey",
+                range: 0..8,
+            },
+        };
+        let mut hasher = ::std::hash::DefaultHasher::new();
+        buffer.hash(&mut hasher);
+        hasher.finish()
+    };
+
+    assert_ne!(hash0, hash1);
 }

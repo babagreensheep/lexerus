@@ -5,7 +5,7 @@ use std::ops::Range;
 #[cfg(test)]
 mod tests;
 
-#[derive(PartialEq, Clone)]
+#[derive(Eq, Clone)]
 /// [Buffer] is a container for source code. It is represented as an `enum` because there are two
 /// forms of [Buffer] which can be created:
 /// - A _contiguous_ chunk of [str] will always be allocated as a [Buffer::Cont] and make use of the simple chunk container.
@@ -13,6 +13,25 @@ mod tests;
 pub enum Buffer<'code> {
     Cont { chunk: Chunk<'code> },
     Frag(Box<Buffer<'code>>, Box<Buffer<'code>>),
+}
+
+impl<'code> PartialEq for Buffer<'code> {
+    fn eq(&self, other: &Self) -> bool {
+        self.to_string() == other.to_string()
+    }
+}
+
+impl<'code> ::std::hash::Hash for Buffer<'code> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        0xff.hash(state);
+        match self {
+            Buffer::Cont { chunk } => chunk.hash(state),
+            Buffer::Frag(lhs, rhs) => {
+                lhs.hash(state);
+                rhs.hash(state);
+            }
+        }
+    }
 }
 
 impl<'code> std::fmt::Debug for Buffer<'code> {
@@ -294,11 +313,25 @@ impl<'code> From<Chunk<'code>> for Buffer<'code> {
     }
 }
 
-#[derive(PartialEq)]
+#[derive(Eq)]
 /// Basic container for [str]. This should never be called by itself.
 pub struct Chunk<'code> {
     code: &'code str,
     range: Range<usize>,
+}
+
+impl<'code> PartialEq for Chunk<'code> {
+    fn eq(&self, other: &Self) -> bool {
+        self.to_string() == other.to_string()
+    }
+}
+
+impl<'code> ::std::hash::Hash for Chunk<'code> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        for byte in self.as_bytes() {
+            state.write_u8(*byte);
+        }
+    }
 }
 
 impl<'code> ::std::ops::Deref for Chunk<'code> {
