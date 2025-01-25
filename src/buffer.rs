@@ -17,13 +17,18 @@ pub enum Buffer<'code> {
 
 impl<'code> PartialEq for Buffer<'code> {
     fn eq(&self, other: &Self) -> bool {
-        self.to_string() == other.to_string()
+        match (self, other) {
+            (
+                Buffer::Cont { chunk },
+                Buffer::Cont { chunk: other },
+            ) => chunk.eq(other),
+            _ => self.to_string() == other.to_string(),
+        }
     }
 }
 
 impl<'code> ::std::hash::Hash for Buffer<'code> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        0xff.hash(state);
         match self {
             Buffer::Cont { chunk } => chunk.hash(state),
             Buffer::Frag(lhs, rhs) => {
@@ -322,7 +327,7 @@ pub struct Chunk<'code> {
 
 impl<'code> PartialEq for Chunk<'code> {
     fn eq(&self, other: &Self) -> bool {
-        self.to_string() == other.to_string()
+        self.search_str() == other.search_str()
     }
 }
 
