@@ -422,6 +422,7 @@ fn hash_frag_cont_eq() {
             this0.clone().into(),
             that1.clone().into(),
         );
+        println!("[{buffer}]");
         let mut hasher = ::std::hash::DefaultHasher::new();
         buffer.hash(&mut hasher);
         hasher.finish()
@@ -434,6 +435,7 @@ fn hash_frag_cont_eq() {
                 range: 0..8,
             },
         };
+        println!("[{buffer}]");
         let mut hasher = ::std::hash::DefaultHasher::new();
         buffer.hash(&mut hasher);
         hasher.finish()
@@ -497,4 +499,85 @@ fn hash_frag_cont_ne() {
     };
 
     assert_ne!(hash0, hash1);
+}
+
+#[test]
+fn equality() {
+    let code = "this that this that";
+
+    let this0 = Buffer::Cont {
+        chunk: Chunk {
+            code,
+            range: 00..04,
+        },
+    };
+
+    let _that0 = Buffer::Cont {
+        chunk: Chunk {
+            code,
+            range: 05..09,
+        },
+    };
+
+    let _this1 = Buffer::Cont {
+        chunk: Chunk {
+            code,
+            range: 10..14,
+        },
+    };
+
+    let that1 = Buffer::Cont {
+        chunk: Chunk {
+            code,
+            range: 15..19,
+        },
+    };
+
+    let buffer0 = Buffer::Frag(
+        this0.clone().into(),
+        that1.clone().into(),
+    );
+
+    let buffer1 = Buffer::Cont {
+        chunk: Chunk {
+            code: "thisthat",
+            range: 0..8,
+        },
+    };
+
+    assert_eq!(buffer0, buffer1);
+}
+
+const RUN: usize = 10000000;
+
+#[test]
+fn timed_hash() {
+    let time = std::time::Instant::now();
+    for _ in 0..RUN {
+        hash_frag_eq();
+    }
+    println!(
+        "finish: {:?}",
+        std::time::Instant::now() - time
+    )
+}
+
+#[test]
+fn timed_equality() {
+    let time = std::time::Instant::now();
+    for _ in 0..RUN {
+        equality();
+    }
+    println!(
+        "finish: {:?}",
+        std::time::Instant::now() - time
+    )
+}
+
+#[test]
+fn timed() {
+    println!("testing hash");
+    timed_hash();
+    println!("testing equality");
+    timed_equality();
 }
