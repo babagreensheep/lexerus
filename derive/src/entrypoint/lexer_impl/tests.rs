@@ -3,7 +3,7 @@ use super::*;
 #[test]
 fn unit_struct() {
     let expr = quote! {
-        struct Meh<'code>(#[pattern("hello", "world")] Buffer<'code>, Buffer<'code>, Char<'code>);
+        struct Meh<'hello, 'world>(#[pattern("hello", "world")] Buffer<'hello>, Buffer<'hello>, Char<'world>);
     };
 
     println!("{expr}");
@@ -15,10 +15,10 @@ fn unit_struct() {
 #[test]
 fn unit_enum() {
     let expr = quote! {
-        enum EnumTester<'code> {
-            One(Buffer<'code>),
-            V1(Tester<'code>, [Tester<'code>; 2]),
-            V2 { member: Tester<'code> },
+        enum EnumTester<'one, 'two, 'three> {
+            One(Buffer<'one>),
+            V1(Char<'two>, [Char<'two>; 2]),
+            V2 { member: Escape<'three> },
         }
     };
 
@@ -110,21 +110,21 @@ fn named_struct() {
     println!("{}", parse_impl.into_token_stream());
 }
 
-#[test]
-fn multiple_lifetimes() {
-    let expr = quote! {
-        struct Tester<'code, 'code>(#[pattern("hello", "world")] Buffer<'code>, Buffer<'code2>, Tester<'code>);
-    };
-
-    let parse_impl = LexerImpl::try_from(expr).unwrap();
-    let parse_impl =
-        parse_impl.impl_trait().map(|_| ()).unwrap_err();
-    assert_eq!(
-        "only one lifetime is permitted as the tokens are \
-         constructed from a single source tree",
-        parse_impl.to_string()
-    )
-}
+// #[test]
+// fn multiple_lifetimes() {
+//     let expr = quote! {
+//         struct Tester<'code, 'code>(#[pattern("hello", "world")] Buffer<'hello>, Buffer<'>, Tester<'code>);
+//     };
+//
+//     let parse_impl = LexerImpl::try_from(expr).unwrap();
+//     let parse_impl =
+//         parse_impl.impl_trait().map(|_| ()).unwrap_err();
+//     assert_eq!(
+//         "only one lifetime is permitted as the tokens are \
+//          constructed from a single source tree",
+//         parse_impl.to_string()
+//     )
+// }
 
 #[test]
 fn custom_pkg_name() {

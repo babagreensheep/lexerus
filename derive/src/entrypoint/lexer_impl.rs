@@ -1,6 +1,5 @@
 //! Helper for implying [#module_name::Lexer] trait.
 use super::*;
-use syn::Meta;
 
 enum Data {
     Struct(DataStruct),
@@ -12,6 +11,8 @@ pub(crate) struct LexerImpl {
     ident: Ident,
     module_name: Ident,
     lexer_hook: Option<Expr>,
+    new_lifetime: Lifetime,
+    new_generics: Generics,
     generics: Generics,
     data: Data,
 }
@@ -61,22 +62,23 @@ impl LexerImpl {
             ident,
             generics,
             module_name,
+            new_lifetime,
+            new_generics,
             ..
         } = self;
 
         // Get generics
-        let (impl_gen, impl_type, impl_where) =
+        let (_, impl_type, impl_where) =
             generics.split_for_impl();
-
-        // Create lifetime
-        let lifetime = self.lifetime()?;
+        let (impl_gen, _, _) =
+            new_generics.split_for_impl();
 
         // Create impl block
         let lexer_trait_block = self.lexer_trait_block()?;
 
         // Create impl
         let lexer_trait_impl = quote_spanned! { ident.span() =>
-            impl #impl_gen #module_name::Lexer<#lifetime> for #ident #impl_type #impl_where #lexer_trait_block
+            impl #impl_gen #module_name::Lexer<#new_lifetime> for #ident #impl_type #impl_where #lexer_trait_block
         };
 
         let lexer_trait_impl =
@@ -95,22 +97,23 @@ impl LexerImpl {
             ident,
             generics,
             module_name,
+            new_lifetime,
+            new_generics,
             ..
         } = self;
 
         // Get generics
-        let (impl_gen, impl_type, impl_where) =
+        let (_, impl_type, impl_where) =
             generics.split_for_impl();
-
-        // Create lifetime
-        let lifetime = self.lifetime()?;
+        let (impl_gen, _, _) =
+            new_generics.split_for_impl();
 
         // Create impl block
         let token_trait_block = self.token_trait_block()?;
 
         // Create impl
         let token_trait_impl = quote_spanned! { ident.span() =>
-            impl #impl_gen #module_name::Token<#lifetime> for #ident #impl_type #impl_where #token_trait_block
+            impl #impl_gen #module_name::Token<#new_lifetime> for #ident #impl_type #impl_where #token_trait_block
         };
 
         let token_trait_impl =
@@ -148,10 +151,10 @@ impl LexerImpl {
 
     fn fn_buffer(&self) -> Result<ItemFn, Error> {
         let block = self.fn_buffer_block()?;
-        let lifetime = self.lifetime()?;
+        let new_lifetime = &self.new_lifetime;
         let module_name = &self.module_name;
         let item_fn = quote! {
-            fn buffer(&self) -> Option<#module_name::Buffer<#lifetime>> #block
+            fn buffer(&self) -> Option<#module_name::Buffer<#new_lifetime>> #block
         };
         let item_fn = parse2::<ItemFn>(item_fn)?;
         Ok(item_fn)
@@ -491,7 +494,7 @@ impl LexerImpl {
 
     fn fn_lexer(&self) -> Result<ItemFn, Error> {
         // Grab lifetime
-        let lifetime = self.lifetime()?;
+        let new_lifetime = &self.new_lifetime;
 
         // Create block
         let block = match &self.data {
@@ -516,8 +519,8 @@ impl LexerImpl {
         // Create function body
         let item_fn = quote! {
             fn lex(
-                buffer: & mut #module_name::Buffer<#lifetime>
-            ) -> Result<Self, #module_name::Error<#lifetime>> #block
+                buffer: & mut #module_name::Buffer<#new_lifetime>
+            ) -> Result<Self, #module_name::Error<#new_lifetime>> #block
         };
         let item_fn = parse2::<ItemFn>(item_fn)?;
 
@@ -536,9 +539,9 @@ impl LexerImpl {
         let module_name = &self.module_name;
         let buffer_ident = self.buffer_ident();
         let local_buffer_ident = &self.local_buffer_ident();
-        let lifetime = &self.lifetime()?;
         let local_error_ident =
             format_ident!("local_error");
+        let new_lifetime = &self.new_lifetime;
 
         // Create variants
         let mut field_counter = 0usize;
@@ -563,7 +566,7 @@ impl LexerImpl {
 
                 // make closure
                 let closure = quote! {
-                    let #field_counter_str = |#buffer_ident: &mut #module_name::Buffer<#lifetime>| #block
+                    let #field_counter_str = |#buffer_ident: &mut #module_name::Buffer<#new_lifetime>| #block
                 };
                 let closure = parse2::<ExprLet>(closure)?;
 
@@ -607,7 +610,7 @@ impl LexerImpl {
         // Create blocks
         let block = quote! {{
             let mut #local_buffer_ident = #buffer_ident.clone();
-            let mut #local_error_ident = None::<#module_name::Error<#lifetime>>;
+            let mut #local_error_ident = None::<#module_name::Error<#new_lifetime>>;
 
             #(#variants_delcs);*;
 
@@ -642,7 +645,7 @@ impl LexerImpl {
         let count = self.count();
         let buffer_ident = self.buffer_ident();
         let local_buffer_ident = self.local_buffer_ident();
-        let lifetime = self.lifetime()?;
+        let new_lifetime = &self.new_lifetime;
 
         // Check if named or not
         let named = match fields {
@@ -695,7 +698,7 @@ impl LexerImpl {
             #(#fields_stmts);*;
             *#buffer_ident = #local_buffer_ident;
             let ok_value = #ok_value;
-            Ok::<Self, #module_name::Error<#lifetime>>(ok_value)
+            Ok::<Self, #module_name::Error<#new_lifetime>>(ok_value)
         }};
 
         let block = parse2::<Block>(block)?;
@@ -750,6 +753,7 @@ impl LexerImpl {
     ) -> Result<Vec<Expr>, Error> {
         // Iterate statements
         let mut field_counter = 0usize;
+        let new_lifetime = &self.new_lifetime;
         let fields_stmts = fields
             .iter()
             .map(|field| {
@@ -766,7 +770,7 @@ impl LexerImpl {
                 // Create let expr
         let module_name = &self.module_name;
                 let let_expr = quote! {
-                    let #field_counter_str = #expr.map_err(|mut err: #module_name::Error<'code>| {
+                    let #field_counter_str = #expr.map_err(|mut err: #module_name::Error<#new_lifetime>| {
                         err.matched += count;
                         err
                     })?
@@ -1155,23 +1159,6 @@ impl LexerImpl {
         format_ident!("local_{}", ident)
     }
 
-    fn lifetime(&self) -> Result<Lifetime, Error> {
-        let lifetimes = self.generics.lifetimes();
-        let lifetimes = lifetimes.collect::<Vec<_>>();
-        if lifetimes.len() != 1 {
-            Err(Error::new(
-                self.generics.span(),
-                "only one lifetime is permitted as the \
-                 tokens are constructed from a single \
-                 source tree",
-            ))
-        }
-        else {
-            let lifetime = lifetimes.first().unwrap(); // Count checked
-            Ok(lifetime.lifetime.clone())
-        }
-    }
-
     fn count(&self) -> Ident {
         format_ident!("count")
     }
@@ -1190,7 +1177,7 @@ impl TryFrom<TokenStream> for LexerImpl {
         // Create expression
         let DeriveInput {
             ident,
-            generics,
+            mut generics,
             data,
             attrs,
             ..
@@ -1217,6 +1204,7 @@ impl TryFrom<TokenStream> for LexerImpl {
                     None
                 }
             });
+
         let lexer_hook =
             if let Some(lexer_hook) = lexer_hook {
                 Some(lexer_hook?)
@@ -1272,10 +1260,52 @@ impl TryFrom<TokenStream> for LexerImpl {
             )),
         }?;
 
+        // Clone
+        let mut new_generics = generics.clone();
+
+        // Fetch span
+        let new_lifetime_span = new_generics.span();
+
+        // Create new lifetime
+        let new_lifetime = new_generics.lifetimes().fold(
+            String::from("'new_"),
+            |mut new_lifetime, param| {
+                let lifetime =
+                    param.lifetime.ident.to_string();
+                new_lifetime.push_str(&lifetime);
+                new_lifetime
+            },
+        );
+        let new_lifetime =
+            Lifetime::new(&new_lifetime, new_lifetime_span);
+
+        // Create new lifetime param
+        let new_lifetime_param = {
+            let existing_lifetimes =
+                new_generics.lifetimes();
+            let existing_lifetimes = existing_lifetimes
+                .map(|param| param.lifetime.clone());
+
+            parse2::<GenericParam>(quote! {
+                #new_lifetime: #(#existing_lifetimes)+*
+            })
+            .unwrap()
+        };
+
+        // Push new lifetime onto existing lifetimes
+        for param in new_generics.lifetimes_mut() {
+            param.bounds.push(new_lifetime.clone());
+        }
+
+        // Add new generic lifetime
+        new_generics.params.push(new_lifetime_param);
+
         Ok(Self {
             module_name,
             lexer_hook,
             ident,
+            new_lifetime,
+            new_generics,
             generics,
             data,
         })
