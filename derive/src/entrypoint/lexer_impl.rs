@@ -789,7 +789,7 @@ impl LexerImpl {
         let module_name = &self.module_name;
                 let let_expr = quote! {
                     let #field_counter_str = #expr.map_err(|mut err: #module_name::Error<#new_lifetime>| {
-                        err.matched += count;
+                        err.matched += #count;
                         err
                     })?
                 };
@@ -1054,6 +1054,7 @@ impl LexerImpl {
         &self,
         types: &Option<Vec<Type>>,
     ) -> Result<Vec<Expr>, Error> {
+        let count = self.count();
         let local_buffer_ident = self.local_buffer_ident();
         let new_lifetime = &self.new_lifetime;
         let module_name = &self.module_name;
@@ -1077,7 +1078,13 @@ impl LexerImpl {
 
                 let expr = parse2::<Expr>(expr)?;
 
-                exprs.push(expr)
+                let expr_let = quote! {
+                    let #count = #count + 1
+                };
+                let expr_let = parse2::<ExprLet>(expr_let)?;
+
+                exprs.push(expr);
+                exprs.push(expr_let.into());
             }
         }
 
@@ -1379,8 +1386,7 @@ impl TryFrom<TokenStream> for LexerImpl {
 
             parse2::<GenericParam>(quote! {
                 #new_lifetime: #(#existing_lifetimes)+*
-            })
-            .unwrap()
+            })?
         };
 
         // Push new lifetime onto existing lifetimes

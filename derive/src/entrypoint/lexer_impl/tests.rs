@@ -113,15 +113,16 @@ fn named_struct() {
 // #[test]
 // fn multiple_lifetimes() {
 //     let expr = quote! {
-//         struct Tester<'code, 'code>(#[pattern("hello", "world")] Buffer<'hello>, Buffer<'>, Tester<'code>);
+//         struct Tester<'code, 'code>(#[pattern("hello",
+// "world")] Buffer<'hello>, Buffer<'>, Tester<'code>);
 //     };
 //
 //     let parse_impl = LexerImpl::try_from(expr).unwrap();
 //     let parse_impl =
 //         parse_impl.impl_trait().map(|_| ()).unwrap_err();
 //     assert_eq!(
-//         "only one lifetime is permitted as the tokens are \
-//          constructed from a single source tree",
+//         "only one lifetime is permitted as the tokens are
+// \          constructed from a single source tree",
 //         parse_impl.to_string()
 //     )
 // }
@@ -148,6 +149,9 @@ fn before() {
 
     println!("{expr}");
     let parse_impl = LexerImpl::try_from(expr).unwrap();
-    let parse_impl = parse_impl.impl_trait().unwrap();
+    let parse_impl = parse_impl
+        .impl_trait()
+        .map_err(|err| err.into_compile_error())
+        .unwrap();
     println!("{}", parse_impl.into_token_stream());
 }
