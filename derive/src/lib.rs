@@ -47,7 +47,13 @@ mod entrypoint;
 /// ### Before / After
 /// Eats tokens before and after
 /// ```ignore
-/// #[lexerus = "newname"]
+/// #[derive(Lexer, Token, Debug)]
+/// struct Ra<'code>(#[pattern = "ra"] Buffer<'code>);
+///
+/// #[derive(Lexer, Token, Debug)]
+/// #[before(Quote, Ra)]
+/// #[after(Quote)]
+/// struct Wr<'code>(#[pattern = "wr"] Buffer<'code>);
 /// ```
 ///
 /// ## Inner
