@@ -14,7 +14,7 @@ pub struct Error<'code> {
     pub kind: Kind,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 /// Describes the type of error found.
 pub enum Kind {
     /// This means that the token was not found

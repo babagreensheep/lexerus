@@ -138,3 +138,16 @@ fn custom_pkg_name() {
     let parse_impl = parse_impl.impl_trait().unwrap();
     println!("{}", parse_impl.into_token_stream());
 }
+
+#[test]
+fn before() {
+    let expr = quote! {
+        #[before(Before, Two)]
+        struct Meh<'code>(#[pattern("hello", "world")] Buffer<'code>, Buffer<'code>, Char<'code>);
+    };
+
+    println!("{expr}");
+    let parse_impl = LexerImpl::try_from(expr).unwrap();
+    let parse_impl = parse_impl.impl_trait().unwrap();
+    println!("{}", parse_impl.into_token_stream());
+}

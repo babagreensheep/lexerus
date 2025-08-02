@@ -1,4 +1,8 @@
 //! Helper for implying [#module_name::Lexer] trait.
+use syn::Stmt;
+use syn::parse::ParseStream;
+use syn::punctuated::Punctuated;
+
 use super::*;
 
 enum Data {
@@ -15,6 +19,8 @@ pub(crate) struct LexerImpl {
     new_generics: Generics,
     generics: Generics,
     data: Data,
+    before: Option<Vec<Type>>,
+    after: Option<Vec<Type>>,
 }
 
 impl Debug for LexerImpl {
@@ -657,6 +663,12 @@ impl LexerImpl {
             ))?,
         };
 
+        // Check if consume before
+        let before = self.eat(&self.before)?;
+
+        // Check if consume after
+        let after = self.eat(&self.after)?;
+
         // Iterate statements
         let fields_stmts =
             self.fn_lexer_stmt_from_fields(&count, fields)?;
@@ -695,7 +707,13 @@ impl LexerImpl {
         let block = quote! {{
             let mut #local_buffer_ident = #buffer_ident.clone();
             let #count: ::std::primitive::usize = 0;
+
+            #(#before);*;
+
             #(#fields_stmts);*;
+
+            #(#after);*;
+
             *#buffer_ident = #local_buffer_ident;
             let ok_value = #ok_value;
             Ok::<Self, #module_name::Error<#new_lifetime>>(ok_value)
@@ -1032,6 +1050,40 @@ impl LexerImpl {
         build_with || ignore_token
     }
 
+    fn eat(
+        &self,
+        types: &Option<Vec<Type>>,
+    ) -> Result<Vec<Expr>, Error> {
+        let local_buffer_ident = self.local_buffer_ident();
+        let new_lifetime = &self.new_lifetime;
+        let module_name = &self.module_name;
+
+        let mut exprs = Vec::new();
+
+        if let Some(types) = types {
+            for ty in types {
+                let expr = self
+                    .fn_lexer_expr_from_non_terminal(
+                        &local_buffer_ident,
+                        ty,
+                    )?;
+
+                let expr = quote! {
+                    let _discard = #expr.map_err(|mut err: #module_name::Error<#new_lifetime> | {
+                        err.matched += count;
+                        err
+                    })?
+                };
+
+                let expr = parse2::<Expr>(expr)?;
+
+                exprs.push(expr)
+            }
+        }
+
+        Ok(exprs)
+    }
+
     fn build_with(
         attributes: &[Attribute],
     ) -> Option<Result<Expr, Error>> {
@@ -1166,6 +1218,34 @@ impl LexerImpl {
     fn buffer_ident(&self) -> Ident {
         format_ident!("buffer")
     }
+
+    fn extract_attr<'attr, Attrs>(
+        attrs: Attrs,
+        name: &str,
+    ) -> Option<TokenStream>
+    where
+        Attrs: Iterator<Item = &'attr Attribute>,
+    {
+        attrs
+            .filter_map(|attr| {
+                if let Meta::List(attr) = &attr.meta {
+                    Some(attr)
+                }
+                else {
+                    None
+                }
+            })
+            .find_map(|list| {
+                let ident = list.path.get_ident()?;
+                if ident == name {
+                    let expr = list.tokens.clone();
+                    Some(expr)
+                }
+                else {
+                    None
+                }
+            })
+    }
 }
 
 impl TryFrom<TokenStream> for LexerImpl {
@@ -1177,41 +1257,52 @@ impl TryFrom<TokenStream> for LexerImpl {
         // Create expression
         let DeriveInput {
             ident,
-            mut generics,
+            generics,
             data,
             attrs,
             ..
         } = parse2::<DeriveInput>(expr)?;
 
-        let lexer_hook = attrs
-            .iter()
-            .filter_map(|attr| {
-                if let Meta::List(attr) = &attr.meta {
-                    Some(attr)
-                }
-                else {
-                    None
-                }
-            })
-            .find_map(|list| {
-                let ident = list.path.get_ident()?;
-                if ident == "hook" {
-                    let expr = list.tokens.clone();
-                    let expr = parse2::<Expr>(expr);
-                    Some(expr)
-                }
-                else {
-                    None
-                }
-            });
+        let punc_parser = |input: ParseStream| {
+            Punctuated::<Type, Token![,]>::parse_terminated(
+                input,
+            )
+        };
 
-        let lexer_hook =
-            if let Some(lexer_hook) = lexer_hook {
-                Some(lexer_hook?)
+        let before = match Self::extract_attr(
+            attrs.iter(),
+            "before",
+        ) {
+            Some(tokens) => {
+                let types = punc_parser.parse2(tokens)?;
+                let types =
+                    types.into_iter().collect::<Vec<_>>();
+                Some(types)
             }
-            else {
-                None
+            None => None,
+        };
+
+        let after =
+            match Self::extract_attr(attrs.iter(), "after")
+            {
+                Some(tokens) => {
+                    let types =
+                        punc_parser.parse2(tokens)?;
+                    let types = types
+                        .into_iter()
+                        .collect::<Vec<_>>();
+                    Some(types)
+                }
+                None => None,
             };
+
+        let lexer_hook = match Self::extract_attr(
+            attrs.iter(),
+            "hook",
+        ) {
+            Some(tokens) => Some(parse2::<Expr>(tokens)?),
+            None => None,
+        };
 
         let module_name = attrs
             .iter()
@@ -1308,6 +1399,8 @@ impl TryFrom<TokenStream> for LexerImpl {
             new_generics,
             generics,
             data,
+            before,
+            after,
         })
     }
 }

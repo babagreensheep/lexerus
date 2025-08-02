@@ -6,28 +6,84 @@ mod entrypoint;
 
 #[proc_macro_derive(
     Lexer,
-    attributes(pattern, hook, lexerus, build_with)
+    attributes(
+        pattern, before, after, hook, lexerus, build_with
+    )
 )]
+/// # [Lexer]
 /// Decorates a `struct` or `enum` with `impl Lexer<'code>`.
 ///
-/// **Attributes**:
+/// # Attributes
 ///
-/// - `lexerus`: Remap for the module name
+/// ## Outer
 ///
-/// - `pattern`: Either of the following can be used to mark
-///   a field which contains a buffer, which tells the lexer
-///   to match `pattern` at the **start** of the buffef
-///     - `#[pattern = "pat"]`: Matches `pat`
-///     - `#[pattern("pat1", "pat2")]`: Matchines `pat1` or
-///       `pat2`
+/// ### Lexerus
+/// Remaps the module name
+/// ```ignore
+/// #[lexerus = "newname"]
+/// ```
 ///
-/// - `build_with`: Specify an expression which is used to
-///   build the annotated field
+/// ### Hook
+/// A hook to run after the [Lexer] has successfullly lexed and produced a [Result::Ok]
+/// ```ignore
+/// #[derive(Lexer, Token, Debug)]
+/// struct Trex<'code>(#[pattern = "rawr"] Buffer<'code>);
 ///
-/// - `hook(function)`: Annotates the structure to tell
-///   [Lexer] to run the ok result through the hook first.
-///   The `function` must accept `self` as its only
-///   parameter, and return `Result<Self, Error<'code>>`
+/// #[derive(Lexer, Token, Debug)]
+/// #[hook(Self::hook)]
+/// struct TaggedTrex<'code>(
+///     Trex<'code>,
+///     #[build_with(Ok(0))] usize,
+/// );
+///
+/// impl<'code> TaggedTrex<'code> {
+///     fn hook(mut self) -> Result<Self, Error<'code>> {
+///         self.1 = 10;
+///         Ok(self)
+///     }
+/// }
+/// ```
+///
+/// ### Before / After
+/// Eats tokens before and after
+/// ```ignore
+/// #[lexerus = "newname"]
+/// ```
+///
+/// ## Inner
+///
+/// ### Pattern
+/// Either of the following can be used to mark a field which
+/// contains a buffer, which tells the lexer to match `pattern`
+/// at the **start** of the buffer
+///  - `#[pattern = "pat"]`: Matches `pat`
+///  - `#[pattern("pat1", "pat2")]`: Matchines `pat1` or
+///    `pat2`
+/// ```ignore
+/// #[derive(Debug, Clone, Lexer, Token)]
+/// pub struct LcLetter<'code>(
+///     #[pattern(
+///         "a", "b", "c", "d", "e", "f", "g", "h", "i", "j",
+///         "k", "l", "m", "n", "o", "p", "q", "r", "s", "t",
+///         "u", "v", "w", "x", "y", "z"
+///     )]
+///     Buffer<'code>,
+/// );
+/// ```
+///
+/// ### Build with
+/// Specify an expression which is used to build the annotated field
+/// Remaps the module name
+/// ```ignore
+/// #[derive(Lexer, Token, Debug)]
+/// struct Trex<'code>(#[pattern = "rawr"] Buffer<'code>);
+///
+/// #[derive(Lexer, Token, Debug)]
+/// struct BuiltRex<'code>(
+///     Trex<'code>,
+///     #[build_with(Ok(0))] usize,
+/// );
+/// ```
 pub fn derive_lex(
     expr: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
