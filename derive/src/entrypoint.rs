@@ -1,14 +1,14 @@
 use proc_macro2::TokenStream;
-use quote::{format_ident, quote, quote_spanned, ToTokens};
+use quote::{ToTokens, format_ident, quote, quote_spanned};
 use std::fmt::Debug;
 use syn::{
-    parse::Parser, parse2, punctuated, spanned::Spanned,
     Attribute, Block, DataEnum, DataStruct, DeriveInput,
     Error, Expr, ExprArray, ExprBlock, ExprIf, ExprLet,
     ExprMatch, Field, FieldValue, Fields, FieldsUnnamed,
-    Generics, Ident, ItemFn, ItemImpl, Lifetime, Lit,
-    LitInt, LitStr, Token, Type, TypeArray, TypePath,
-    TypeTuple, Variant,
+    GenericParam, Generics, Ident, ItemFn, ItemImpl,
+    Lifetime, Lit, LitInt, LitStr, Meta, Token, Type,
+    TypeArray, TypePath, TypeTuple, Variant, parse::Parser,
+    parse2, punctuated, spanned::Spanned,
 };
 
 // ImplParse
