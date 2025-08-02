@@ -24,8 +24,8 @@ mod entrypoint;
 /// ```
 ///
 /// ### Hook
-/// A hook to run after the [Lexer] has successfullly lexed and produced a [Result::Ok]
-/// ```ignore
+/// A hook to run after the [Lexer] has successfully lexed
+/// and produced a [Result::Ok] ```ignore
 /// #[derive(Lexer, Token, Debug)]
 /// struct Trex<'code>(#[pattern = "rawr"] Buffer<'code>);
 ///
@@ -43,7 +43,7 @@ mod entrypoint;
 ///     }
 /// }
 /// ```
-///
+/// 
 /// ### Before / After
 /// Eats tokens before and after
 /// ```ignore
@@ -55,13 +55,13 @@ mod entrypoint;
 /// #[after(Quote)]
 /// struct Wr<'code>(#[pattern = "wr"] Buffer<'code>);
 /// ```
-///
+/// 
 /// ## Inner
 ///
 /// ### Pattern
-/// Either of the following can be used to mark a field which
-/// contains a buffer, which tells the lexer to match `pattern`
-/// at the **start** of the buffer
+/// Either of the following can be used to mark a field
+/// which contains a buffer, which tells the lexer to match
+/// `pattern` at the **start** of the buffer
 ///  - `#[pattern = "pat"]`: Matches `pat`
 ///  - `#[pattern("pat1", "pat2")]`: Matchines `pat1` or
 ///    `pat2`
@@ -69,17 +69,17 @@ mod entrypoint;
 /// #[derive(Debug, Clone, Lexer, Token)]
 /// pub struct LcLetter<'code>(
 ///     #[pattern(
-///         "a", "b", "c", "d", "e", "f", "g", "h", "i", "j",
-///         "k", "l", "m", "n", "o", "p", "q", "r", "s", "t",
-///         "u", "v", "w", "x", "y", "z"
+///         "a", "b", "c", "d", "e", "f", "g", "h", "i",
+/// "j",         "k", "l", "m", "n", "o", "p", "q", "r",
+/// "s", "t",         "u", "v", "w", "x", "y", "z"
 ///     )]
 ///     Buffer<'code>,
 /// );
 /// ```
-///
+/// 
 /// ### Build with
-/// Specify an expression which is used to build the annotated field
-/// Remaps the module name
+/// Specify an expression which is used to build the
+/// annotated field Remaps the module name
 /// ```ignore
 /// #[derive(Lexer, Token, Debug)]
 /// struct Trex<'code>(#[pattern = "rawr"] Buffer<'code>);

@@ -7,8 +7,31 @@ fn unit_struct() {
     };
 
     println!("{expr}");
-    let parse_impl = LexerImpl::try_from(expr).unwrap();
-    let parse_impl = parse_impl.impl_trait().unwrap();
+    let mut parse_impl =
+        LexerImpl::try_from(expr.clone()).unwrap();
+    let mut parse_impl =
+        parse_impl.impl_trait_token().unwrap();
+    println!("{}", parse_impl.into_token_stream());
+    let mut parse_impl =
+        LexerImpl::try_from(expr.clone()).unwrap();
+    let parse_impl = parse_impl.impl_trait_lex().unwrap();
+    println!("{}", parse_impl.into_token_stream());
+}
+
+#[test]
+fn unit_struct_wo_life() {
+    let expr = quote! {
+        struct Meh(T);
+    };
+
+    println!("{expr}");
+    let mut parse_impl =
+        LexerImpl::try_from(expr.clone()).unwrap();
+    let parse_impl = parse_impl.impl_trait_token().unwrap();
+    println!("{}", parse_impl.into_token_stream());
+    let mut parse_impl =
+        LexerImpl::try_from(expr.clone()).unwrap();
+    let parse_impl = parse_impl.impl_trait_lex().unwrap();
     println!("{}", parse_impl.into_token_stream());
 }
 
@@ -23,8 +46,13 @@ fn unit_enum() {
     };
 
     println!("{expr}");
-    let parse_impl = LexerImpl::try_from(expr).unwrap();
-    let parse_impl = parse_impl.impl_trait().unwrap();
+    let mut parse_impl =
+        LexerImpl::try_from(expr.clone()).unwrap();
+    let parse_impl = parse_impl.impl_trait_token().unwrap();
+    println!("{}", parse_impl.into_token_stream());
+    let mut parse_impl =
+        LexerImpl::try_from(expr.clone()).unwrap();
+    let parse_impl = parse_impl.impl_trait_lex().unwrap();
     println!("{}", parse_impl.into_token_stream());
 }
 
@@ -37,8 +65,13 @@ fn array_struct() {
     };
 
     println!("{expr}");
-    let parse_impl = LexerImpl::try_from(expr).unwrap();
-    let parse_impl = parse_impl.impl_trait().unwrap();
+    let mut parse_impl =
+        LexerImpl::try_from(expr.clone()).unwrap();
+    let parse_impl = parse_impl.impl_trait_token().unwrap();
+    println!("{}", parse_impl.into_token_stream());
+    let mut parse_impl =
+        LexerImpl::try_from(expr.clone()).unwrap();
+    let parse_impl = parse_impl.impl_trait_lex().unwrap();
     println!("{}", parse_impl.into_token_stream());
 }
 
@@ -49,8 +82,13 @@ fn simple_array() {
     };
 
     println!("{expr}");
-    let parse_impl = LexerImpl::try_from(expr).unwrap();
-    let parse_impl = parse_impl.impl_trait().unwrap();
+    let mut parse_impl =
+        LexerImpl::try_from(expr.clone()).unwrap();
+    let parse_impl = parse_impl.impl_trait_token().unwrap();
+    println!("{}", parse_impl.into_token_stream());
+    let mut parse_impl =
+        LexerImpl::try_from(expr.clone()).unwrap();
+    let parse_impl = parse_impl.impl_trait_lex().unwrap();
     println!("{}", parse_impl.into_token_stream());
 }
 
@@ -61,8 +99,13 @@ fn nested_array_struct() {
     };
 
     println!("{expr}");
-    let parse_impl = LexerImpl::try_from(expr).unwrap();
-    let parse_impl = parse_impl.impl_trait().unwrap();
+    let mut parse_impl =
+        LexerImpl::try_from(expr.clone()).unwrap();
+    let parse_impl = parse_impl.impl_trait_token().unwrap();
+    println!("{}", parse_impl.into_token_stream());
+    let mut parse_impl =
+        LexerImpl::try_from(expr.clone()).unwrap();
+    let parse_impl = parse_impl.impl_trait_lex().unwrap();
     println!("{}", parse_impl.into_token_stream());
 }
 
@@ -75,8 +118,13 @@ fn simple_tuple() {
     };
 
     println!("{expr}");
-    let parse_impl = LexerImpl::try_from(expr).unwrap();
-    let parse_impl = parse_impl.impl_trait().unwrap();
+    let mut parse_impl =
+        LexerImpl::try_from(expr.clone()).unwrap();
+    let parse_impl = parse_impl.impl_trait_token().unwrap();
+    println!("{}", parse_impl.into_token_stream());
+    let mut parse_impl =
+        LexerImpl::try_from(expr.clone()).unwrap();
+    let parse_impl = parse_impl.impl_trait_lex().unwrap();
     println!("{}", parse_impl.into_token_stream());
 }
 
@@ -89,8 +137,13 @@ fn nested_tuple() {
     };
 
     println!("{expr}");
-    let parse_impl = LexerImpl::try_from(expr).unwrap();
-    let parse_impl = parse_impl.impl_trait().unwrap();
+    let mut parse_impl =
+        LexerImpl::try_from(expr.clone()).unwrap();
+    let parse_impl = parse_impl.impl_trait_token().unwrap();
+    println!("{}", parse_impl.into_token_stream());
+    let mut parse_impl =
+        LexerImpl::try_from(expr.clone()).unwrap();
+    let parse_impl = parse_impl.impl_trait_lex().unwrap();
     println!("{}", parse_impl.into_token_stream());
 }
 
@@ -105,8 +158,13 @@ fn named_struct() {
         }
     };
     println!("{expr}");
-    let parse_impl = LexerImpl::try_from(expr).unwrap();
-    let parse_impl = parse_impl.impl_trait().unwrap();
+    let mut parse_impl =
+        LexerImpl::try_from(expr.clone()).unwrap();
+    let parse_impl = parse_impl.impl_trait_token().unwrap();
+    println!("{}", parse_impl.into_token_stream());
+    let mut parse_impl =
+        LexerImpl::try_from(expr.clone()).unwrap();
+    let parse_impl = parse_impl.impl_trait_lex().unwrap();
     println!("{}", parse_impl.into_token_stream());
 }
 
@@ -135,8 +193,13 @@ fn custom_pkg_name() {
     };
 
     println!("{expr}");
-    let parse_impl = LexerImpl::try_from(expr).unwrap();
-    let parse_impl = parse_impl.impl_trait().unwrap();
+    let mut parse_impl =
+        LexerImpl::try_from(expr.clone()).unwrap();
+    let parse_impl = parse_impl.impl_trait_token().unwrap();
+    println!("{}", parse_impl.into_token_stream());
+    let mut parse_impl =
+        LexerImpl::try_from(expr.clone()).unwrap();
+    let parse_impl = parse_impl.impl_trait_lex().unwrap();
     println!("{}", parse_impl.into_token_stream());
 }
 
@@ -148,10 +211,12 @@ fn before() {
     };
 
     println!("{expr}");
-    let parse_impl = LexerImpl::try_from(expr).unwrap();
-    let parse_impl = parse_impl
-        .impl_trait()
-        .map_err(|err| err.into_compile_error())
-        .unwrap();
+    let mut parse_impl =
+        LexerImpl::try_from(expr.clone()).unwrap();
+    let parse_impl = parse_impl.impl_trait_token().unwrap();
+    println!("{}", parse_impl.into_token_stream());
+    let mut parse_impl =
+        LexerImpl::try_from(expr.clone()).unwrap();
+    let parse_impl = parse_impl.impl_trait_lex().unwrap();
     println!("{}", parse_impl.into_token_stream());
 }

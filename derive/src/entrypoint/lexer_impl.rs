@@ -1,5 +1,6 @@
 //! Helper for implying [#module_name::Lexer] trait.
 use syn::Stmt;
+use syn::WherePredicate;
 use syn::parse::ParseStream;
 use syn::punctuated::Punctuated;
 
@@ -50,20 +51,12 @@ impl Debug for LexerImpl {
 }
 
 impl LexerImpl {
-    fn impl_trait(&self) -> Result<TokenStream, Error> {
-        let token_trait_impl = self.impl_trait_token()?;
-        let lexer_trait_impl = self.impl_trait_lex()?;
-
-        // Block
-        Ok(quote! {
-            #token_trait_impl
-            #lexer_trait_impl
-        })
-    }
-
     pub fn impl_trait_lex(
-        &self,
+        &mut self,
     ) -> Result<TokenStream, Error> {
+        // Create impl block
+        let lexer_trait_block = self.lexer_trait_block()?;
+
         let LexerImpl {
             ident,
             generics,
@@ -74,13 +67,9 @@ impl LexerImpl {
         } = self;
 
         // Get generics
-        let (_, impl_type, impl_where) =
-            generics.split_for_impl();
-        let (impl_gen, _, _) =
+        let (_, impl_type, _) = generics.split_for_impl();
+        let (impl_gen, _, impl_where) =
             new_generics.split_for_impl();
-
-        // Create impl block
-        let lexer_trait_block = self.lexer_trait_block()?;
 
         // Create impl
         let lexer_trait_impl = quote_spanned! { ident.span() =>
@@ -97,8 +86,11 @@ impl LexerImpl {
     }
 
     pub fn impl_trait_token(
-        &self,
+        &mut self,
     ) -> Result<TokenStream, Error> {
+        // Create impl block
+        let token_trait_block = self.token_trait_block()?;
+
         let LexerImpl {
             ident,
             generics,
@@ -109,13 +101,9 @@ impl LexerImpl {
         } = self;
 
         // Get generics
-        let (_, impl_type, impl_where) =
-            generics.split_for_impl();
-        let (impl_gen, _, _) =
+        let (_, impl_type, _) = generics.split_for_impl();
+        let (impl_gen, _, impl_where) =
             new_generics.split_for_impl();
-
-        // Create impl block
-        let token_trait_block = self.token_trait_block()?;
 
         // Create impl
         let token_trait_impl = quote_spanned! { ident.span() =>
@@ -131,7 +119,9 @@ impl LexerImpl {
         })
     }
 
-    fn token_trait_block(&self) -> Result<Block, Error> {
+    fn token_trait_block(
+        &mut self,
+    ) -> Result<Block, Error> {
         let impl_buffer_fn = self.fn_buffer()?;
 
         let ident = &self.ident.to_string();
@@ -145,7 +135,9 @@ impl LexerImpl {
         Ok(block)
     }
 
-    fn lexer_trait_block(&self) -> Result<Block, Error> {
+    fn lexer_trait_block(
+        &mut self,
+    ) -> Result<Block, Error> {
         let impl_lexer_fn = self.fn_lexer()?;
 
         let block = quote! {{
@@ -155,7 +147,7 @@ impl LexerImpl {
         Ok(block)
     }
 
-    fn fn_buffer(&self) -> Result<ItemFn, Error> {
+    fn fn_buffer(&mut self) -> Result<ItemFn, Error> {
         let block = self.fn_buffer_block()?;
         let new_lifetime = &self.new_lifetime;
         let module_name = &self.module_name;
@@ -166,28 +158,27 @@ impl LexerImpl {
         Ok(item_fn)
     }
 
-    fn fn_buffer_block(&self) -> Result<Block, Error> {
-        let data = &self.data;
-        let block = match data {
-            Data::Struct(data) => {
+    fn fn_buffer_block(&mut self) -> Result<Block, Error> {
+        let block = match self.data {
+            Data::Struct(ref data) => {
                 let ident = format_ident!("self");
                 let expr_array = self
                     .fn_buffer_array_from_fields::<true>(
                         Some(&ident),
-                        &data.fields,
+                        &data.fields.clone(),
                     )?;
                 self.buffer_block_from_array(&expr_array)?
             }
-            Data::Enum(data) => self
+            Data::Enum(ref data) => self
                 .fn_buffer_block_from_enum(
-                    data.variants.iter(),
+                    data.variants.clone().iter(),
                 )?,
         };
         Ok(block)
     }
 
     fn fn_buffer_block_from_enum<'variant, Variants>(
-        &self,
+        &mut self,
         variants: Variants,
     ) -> Result<Block, Error>
     where
@@ -258,7 +249,7 @@ impl LexerImpl {
     }
 
     fn fn_buffer_array_from_fields<const REF: bool>(
-        &self,
+        &mut self,
         parent_ident: Option<&Ident>,
         fields: &Fields,
     ) -> Result<ExprArray, Error> {
@@ -318,7 +309,7 @@ impl LexerImpl {
         Transformer,
         const REF: bool,
     >(
-        &self,
+        &mut self,
         parent_ident: Option<Expr>,
         transform: Transformer,
         fields: TypeIter,
@@ -361,7 +352,7 @@ impl LexerImpl {
     }
 
     fn fn_buffer_expr_from_field<const REF: bool>(
-        &self,
+        &mut self,
         expr_field: &Expr,
         ty: &Type,
     ) -> Result<Expr, Error> {
@@ -390,7 +381,7 @@ impl LexerImpl {
     }
 
     fn fn_buffer_expr_from_typepath<const REF: bool>(
-        &self,
+        &mut self,
         expr_field: &Expr,
         path: &TypePath,
         ty: &Type,
@@ -416,7 +407,7 @@ impl LexerImpl {
     }
 
     fn fn_buffer_expr_from_typearray(
-        &self,
+        &mut self,
         expr_field: &Expr,
         array: &TypeArray,
     ) -> Result<Expr, Error> {
@@ -454,7 +445,7 @@ impl LexerImpl {
     }
 
     fn fn_buffer_expr_from_typetuple(
-        &self,
+        &mut self,
         expr_field: &Expr,
         ty: &TypeTuple,
     ) -> Result<Expr, Error> {
@@ -484,11 +475,23 @@ impl LexerImpl {
     }
 
     fn fn_buffer_expr_from_non_terminal<const REF: bool>(
-        &self,
+        &mut self,
         expr_field: &Expr,
         ty: &Type,
     ) -> Result<Expr, Error> {
         let module_name = &self.module_name;
+
+        // Add new requirment to where cluase
+        let lifetime = &self.new_lifetime;
+        let new_where = quote! {
+            #ty: #module_name::Token<#lifetime>
+        };
+        let new_where =
+            parse2::<WherePredicate>(new_where)?;
+        let where_clause =
+            self.new_generics.make_where_clause();
+        where_clause.predicates.push(new_where);
+
         let reference =
             if REF { Some(quote! {&}) } else { None };
         let expr = quote! {
@@ -498,13 +501,13 @@ impl LexerImpl {
         Ok(expr)
     }
 
-    fn fn_lexer(&self) -> Result<ItemFn, Error> {
+    fn fn_lexer(&mut self) -> Result<ItemFn, Error> {
         // Grab lifetime
-        let new_lifetime = &self.new_lifetime;
+        let new_lifetime = self.new_lifetime.clone();
 
         // Create block
-        let block = match &self.data {
-            Data::Struct(data) => {
+        let block = match self.data {
+            Data::Struct(ref data) => {
                 // Constructor ty
                 let construct_ty = quote! {Self};
                 let construct_ty =
@@ -512,12 +515,12 @@ impl LexerImpl {
 
                 let block = self.fn_lexer_from_fields(
                     &construct_ty,
-                    &data.fields,
+                    &data.fields.clone(),
                 )?;
                 Ok::<Block, Error>(block)
             }
-            Data::Enum(data) => {
-                self.fn_lexer_from_enum(data)
+            Data::Enum(ref data) => {
+                self.fn_lexer_from_enum(data.clone())
             }
         }?;
 
@@ -535,19 +538,19 @@ impl LexerImpl {
     }
 
     fn fn_lexer_from_enum(
-        &self,
-        data: &DataEnum,
+        &mut self,
+        data: DataEnum,
     ) -> Result<Block, Error> {
         // Destruct
         let DataEnum { variants, .. } = data;
 
         // Get buffer ident
-        let module_name = &self.module_name;
+        let module_name = self.module_name.clone();
         let buffer_ident = self.buffer_ident();
         let local_buffer_ident = &self.local_buffer_ident();
         let local_error_ident =
             format_ident!("local_error");
-        let new_lifetime = &self.new_lifetime;
+        let new_lifetime = self.new_lifetime.clone();
 
         // Create variants
         let mut field_counter = 0usize;
@@ -643,7 +646,7 @@ impl LexerImpl {
     }
 
     fn fn_lexer_from_fields(
-        &self,
+        &mut self,
         construct_ty: &Type,
         fields: &Fields,
     ) -> Result<Block, Error> {
@@ -651,7 +654,7 @@ impl LexerImpl {
         let count = self.count();
         let buffer_ident = self.buffer_ident();
         let local_buffer_ident = self.local_buffer_ident();
-        let new_lifetime = &self.new_lifetime;
+        let new_lifetime = self.new_lifetime.clone();
 
         // Check if named or not
         let named = match fields {
@@ -664,10 +667,10 @@ impl LexerImpl {
         };
 
         // Check if consume before
-        let before = self.eat(&self.before)?;
+        let before = self.eat(self.before.clone())?;
 
         // Check if consume after
-        let after = self.eat(&self.after)?;
+        let after = self.eat(self.after.clone())?;
 
         // Iterate statements
         let fields_stmts =
@@ -765,13 +768,13 @@ impl LexerImpl {
     }
 
     fn fn_lexer_stmt_from_fields(
-        &self,
+        &mut self,
         count: &Ident,
         fields: &Fields,
     ) -> Result<Vec<Expr>, Error> {
         // Iterate statements
         let mut field_counter = 0usize;
-        let new_lifetime = &self.new_lifetime;
+        let new_lifetime = self.new_lifetime.clone();
         let fields_stmts = fields
             .iter()
             .map(|field| {
@@ -812,7 +815,7 @@ impl LexerImpl {
     }
 
     fn fn_lexer_expr_from_field(
-        &self,
+        &mut self,
         attributes: &[Attribute],
         ty: &Type,
     ) -> Result<Expr, Error> {
@@ -841,7 +844,7 @@ impl LexerImpl {
     }
 
     fn fn_lexer_expr_from_typepath(
-        &self,
+        &mut self,
         attributes: &[Attribute],
         path: &TypePath,
         ty: &Type,
@@ -882,7 +885,7 @@ impl LexerImpl {
     }
 
     fn fn_lexer_expr_from_typearray(
-        &self,
+        &mut self,
         array: &TypeArray,
     ) -> Result<Expr, Error> {
         // Create count
@@ -925,7 +928,7 @@ impl LexerImpl {
     }
 
     fn fn_lexer_expr_from_typetuple(
-        &self,
+        &mut self,
         tuple: &TypeTuple,
     ) -> Result<Expr, Error> {
         // Create count
@@ -959,11 +962,23 @@ impl LexerImpl {
     }
 
     fn fn_lexer_expr_from_non_terminal(
-        &self,
+        &mut self,
         local_buffer_ident: &Ident,
         ty: &Type,
     ) -> Result<Expr, Error> {
         let module_name = &self.module_name;
+
+        // Add new requirment to where cluase
+        let lifetime = &self.new_lifetime;
+        let new_where = quote! {
+            #ty: #module_name::Lexer<#lifetime>
+        };
+        let new_where =
+            parse2::<WherePredicate>(new_where)?;
+        let where_clause =
+            self.new_generics.make_where_clause();
+        where_clause.predicates.push(new_where);
+
         let expr = quote_spanned! {ty.span() =>
             <#ty as #module_name::Lexer>::lex(&mut #local_buffer_ident)
         };
@@ -1051,18 +1066,18 @@ impl LexerImpl {
     }
 
     fn eat(
-        &self,
-        types: &Option<Vec<Type>>,
+        &mut self,
+        types: Option<Vec<Type>>,
     ) -> Result<Vec<Expr>, Error> {
         let count = self.count();
         let local_buffer_ident = self.local_buffer_ident();
-        let new_lifetime = &self.new_lifetime;
-        let module_name = &self.module_name;
+        let new_lifetime = self.new_lifetime.clone();
+        let module_name = self.module_name.clone();
 
         let mut exprs = Vec::new();
 
         if let Some(types) = types {
-            for ty in types {
+            for ref ty in types {
                 let expr = self
                     .fn_lexer_expr_from_non_terminal(
                         &local_buffer_ident,
@@ -1365,15 +1380,15 @@ impl TryFrom<TokenStream> for LexerImpl {
         let new_lifetime_span = new_generics.span();
 
         // Create new lifetime
-        let new_lifetime = new_generics.lifetimes().fold(
-            String::from("'new_"),
-            |mut new_lifetime, param| {
-                let lifetime =
-                    param.lifetime.ident.to_string();
-                new_lifetime.push_str(&lifetime);
-                new_lifetime
-            },
-        );
+        let mut new_lifetime = new_generics
+            .lifetimes()
+            .map(|param| param.lifetime.ident.to_string())
+            .collect::<String>();
+        if new_lifetime.is_empty() {
+            new_lifetime = "code".into();
+        }
+
+        let new_lifetime = format!("'{new_lifetime}");
         let new_lifetime =
             Lifetime::new(&new_lifetime, new_lifetime_span);
 
@@ -1382,20 +1397,38 @@ impl TryFrom<TokenStream> for LexerImpl {
             let existing_lifetimes =
                 new_generics.lifetimes();
             let existing_lifetimes = existing_lifetimes
-                .map(|param| param.lifetime.clone());
+                .map(|param| param.lifetime.clone())
+                .collect::<Vec<_>>();
 
-            parse2::<GenericParam>(quote! {
-                #new_lifetime: #(#existing_lifetimes)+*
-            })?
+            parse2::<GenericParam>(
+                if existing_lifetimes.len() < 2 {
+                    quote! {
+                        #new_lifetime
+                    }
+                }
+                else {
+                    quote! {
+                        #new_lifetime: #(#existing_lifetimes)+*
+                    }
+                },
+            )?
         };
 
-        // Push new lifetime onto existing lifetimes
-        for param in new_generics.lifetimes_mut() {
-            param.bounds.push(new_lifetime.clone());
+        // Push new lifetime as constraint for existing
+        // lifetimes; but only if there is more than
+        // one existing lifetime
+        if generics.lifetimes().count() > 1 {
+            for param in new_generics.lifetimes_mut() {
+                param.bounds.push(new_lifetime.clone());
+            }
         }
 
-        // Add new generic lifetime
-        new_generics.params.push(new_lifetime_param);
+        // Add new generic lifetime but only if there are no
+        // existing lifetimes or if there are more
+        // than one lifetimes
+        if generics.lifetimes().count() != 1 {
+            new_generics.params.push(new_lifetime_param);
+        }
 
         Ok(Self {
             module_name,
@@ -1411,19 +1444,20 @@ impl TryFrom<TokenStream> for LexerImpl {
     }
 }
 
-impl From<LexerImpl> for TokenStream {
-    fn from(impl_bnf: LexerImpl) -> Self {
-        // Create impl bnf
-        let impl_bnf = match impl_bnf.impl_trait() {
-            Ok(ok) => ok,
-            Err(err) => err.into_compile_error(),
-        };
-
-        quote! {
-            #impl_bnf
-        }
-    }
-}
+// #[cfg(test)]
+// impl From<LexerImpl> for TokenStream {
+//     fn from(impl_bnf: LexerImpl) -> Self {
+//         // Create impl bnf
+//         let impl_bnf = match impl_bnf.impl_trait() {
+//             Ok(ok) => ok,
+//             Err(err) => err.into_compile_error(),
+//         };
+//
+//         quote! {
+//             #impl_bnf
+//         }
+//     }
+// }
 
 #[cfg(test)]
 mod tests;

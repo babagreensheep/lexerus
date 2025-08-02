@@ -1,8 +1,11 @@
 //! Whitespace markers
-use crate::{Buffer, Lexer, Token};
+use crate::Buffer;
+use crate::Lexer;
+use crate::Token;
 use std::fmt::Display;
 use std::marker::PhantomData;
-use std::ops::{Deref, DerefMut};
+use std::ops::Deref;
+use std::ops::DerefMut;
 
 #[derive(Lexer, Token, Debug, Clone)]
 #[lexerus = "crate"]

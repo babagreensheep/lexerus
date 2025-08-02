@@ -57,7 +57,7 @@ struct Quote<'code>(#[pattern = "\""] Buffer<'code>);
 #[test]
 fn eat_before() {
     #[derive(Lexer, Token, Debug)]
-    #[before(Quote)]
+    #[before(Quote<'code>)]
     struct Trex<'code>(#[pattern = "rawr"] Buffer<'code>);
 
     lexerus::TestBuild::<Trex>::new(
@@ -69,7 +69,7 @@ fn eat_before() {
 #[test]
 fn eat_before_failt() {
     #[derive(Lexer, Token, Debug)]
-    #[before(Quote)]
+    #[before(Quote<'code>)]
     struct Trex<'code>(#[pattern = "rawr"] Buffer<'code>);
 
     lexerus::TestBuild::<Trex>::new(
@@ -83,7 +83,7 @@ fn eat_before_failt() {
 #[test]
 fn eat_after() {
     #[derive(Lexer, Token, Debug)]
-    #[after(Quote)]
+    #[after(Quote<'code>)]
     struct Trex<'code>(#[pattern = "rawr"] Buffer<'code>);
 
     lexerus::TestBuild::<Trex>::new(
@@ -100,7 +100,7 @@ fn eat_after() {
 #[test]
 fn eat_after_fail() {
     #[derive(Lexer, Token, Debug)]
-    #[after(Quote)]
+    #[after(Quote<'code>)]
     struct Trex<'code>(#[pattern = "rawr"] Buffer<'code>);
 
     lexerus::TestBuild::<Trex>::new(
@@ -117,8 +117,8 @@ fn eat_around() {
     struct Ra<'code>(#[pattern = "ra"] Buffer<'code>);
 
     #[derive(Lexer, Token, Debug)]
-    #[before(Quote, Ra)]
-    #[after(Quote)]
+    #[before(Quote<'code>, Ra<'code>)]
+    #[after(Quote<'code>)]
     struct Wr<'code>(#[pattern = "wr"] Buffer<'code>);
 
     lexerus::TestBuild::<Wr>::new(
@@ -130,4 +130,23 @@ fn eat_around() {
             " i have a big head"
         );
     });
+}
+
+#[test]
+fn no_life() {
+    #[derive(Lexer, Token, Debug)]
+    struct Ra<'code>(#[pattern = "ra"] Buffer<'code>);
+
+    #[derive(Lexer, Token, Debug)]
+    struct Wrap<T>(T);
+
+    // lexerus::TestBuild::<Wr>::new(
+    //     r#""rawr" i have a big head"#,
+    // )
+    // .pass(Some(r#"wr"#))(|buffer, captured| {
+    //     assert_eq!(
+    //         buffer.to_string(),
+    //         " i have a big head"
+    //     );
+    // });
 }
