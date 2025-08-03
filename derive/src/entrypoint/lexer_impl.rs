@@ -1,5 +1,4 @@
 //! Helper for implying [#module_name::Lexer] trait.
-use syn::Stmt;
 use syn::WherePredicate;
 use syn::parse::ParseStream;
 use syn::punctuated::Punctuated;
@@ -20,8 +19,8 @@ pub(crate) struct LexerImpl {
     new_generics: Generics,
     generics: Generics,
     data: Data,
-    before: Option<Vec<Type>>,
-    after: Option<Vec<Type>>,
+    before: Vec<Type>,
+    after: Vec<Type>,
 }
 
 impl Debug for LexerImpl {
@@ -667,10 +666,10 @@ impl LexerImpl {
         };
 
         // Check if consume before
-        let before = self.eat(self.before.clone())?;
+        let before = self.eat(&self.before)?;
 
         // Check if consume after
-        let after = self.eat(self.after.clone())?;
+        let after = self.eat(&self.after)?;
 
         // Iterate statements
         let fields_stmts =
@@ -1006,6 +1005,7 @@ impl LexerImpl {
             .collect::<Result<Vec<_>, Error>>()?;
 
         let module_name = &self.module_name;
+        let count = self.count();
 
         // Check if lit_strs is empty
         let lit_strs = if lit_strs.is_empty() {
@@ -1015,7 +1015,7 @@ impl LexerImpl {
                 } else{
                     Err(#module_name::Error{
                         buffer: #buffer_ident.clone(),
-                        matched: 0,
+                        matched: #count,
                         kind: #module_name::Kind::NotFound(<Self as #module_name::Token>::NAME)
                     })
                 }
@@ -1028,7 +1028,7 @@ impl LexerImpl {
                 #(#lit_strs_iter)else * else {
                     Err(#module_name::Error{
                         buffer: #buffer_ident.clone(),
-                        matched: 0,
+                        matched: #count,
                         kind: #module_name::Kind::NotFound(<Self as #module_name::Token>::NAME)
                     })
                 }
@@ -1066,8 +1066,8 @@ impl LexerImpl {
     }
 
     fn eat(
-        &mut self,
-        types: Option<Vec<Type>>,
+        &self,
+        types: &Vec<Type>,
     ) -> Result<Vec<Expr>, Error> {
         let count = self.count();
         let local_buffer_ident = self.local_buffer_ident();
@@ -1076,31 +1076,33 @@ impl LexerImpl {
 
         let mut exprs = Vec::new();
 
-        if let Some(types) = types {
-            for ref ty in types {
-                let expr = self
-                    .fn_lexer_expr_from_non_terminal(
-                        &local_buffer_ident,
-                        ty,
-                    )?;
-
-                let expr = quote! {
-                    let _discard = #expr.map_err(|mut err: #module_name::Error<#new_lifetime> | {
-                        err.matched += count;
-                        err
-                    })?
+        for ty in types {
+            let module_name = &self.module_name;
+            let expr = {
+                let expr = quote_spanned! {ty.span() =>
+                    <#ty as #module_name::Lexer>::lex(&mut #local_buffer_ident)
                 };
+                parse2::<Expr>(expr)?
+            };
 
-                let expr = parse2::<Expr>(expr)?;
+            let expr = quote! {
+                // discard this token
+                let _discard = #expr.map_err(|mut err: #module_name::Error<#new_lifetime> | {
+                    err.matched += count;
+                    err.kind = #module_name::Kind::NotFound(<Self as #module_name::Token>::NAME);
+                    err
+                })?
+            };
 
-                let expr_let = quote! {
-                    let #count = #count + 1
-                };
-                let expr_let = parse2::<ExprLet>(expr_let)?;
+            let expr = parse2::<Expr>(expr)?;
 
-                exprs.push(expr);
-                exprs.push(expr_let.into());
-            }
+            let expr_let = quote! {
+                let #count = #count + 1
+            };
+            let expr_let = parse2::<ExprLet>(expr_let)?;
+
+            exprs.push(expr);
+            exprs.push(expr_let.into());
         }
 
         Ok(exprs)
@@ -1244,7 +1246,7 @@ impl LexerImpl {
     fn extract_attr<'attr, Attrs>(
         attrs: Attrs,
         name: &str,
-    ) -> Option<TokenStream>
+    ) -> impl Iterator<Item = &'attr TokenStream>
     where
         Attrs: Iterator<Item = &'attr Attribute>,
     {
@@ -1257,10 +1259,10 @@ impl LexerImpl {
                     None
                 }
             })
-            .find_map(|list| {
+            .filter_map(move |list| {
                 let ident = list.path.get_ident()?;
                 if ident == name {
-                    let expr = list.tokens.clone();
+                    let expr = &list.tokens;
                     Some(expr)
                 }
                 else {
@@ -1291,39 +1293,43 @@ impl TryFrom<TokenStream> for LexerImpl {
             )
         };
 
-        let before = match Self::extract_attr(
-            attrs.iter(),
-            "before",
-        ) {
-            Some(tokens) => {
-                let types = punc_parser.parse2(tokens)?;
-                let types =
-                    types.into_iter().collect::<Vec<_>>();
-                Some(types)
+        let before = {
+            let mut collection = Vec::new();
+            let tokenstreams =
+                Self::extract_attr(attrs.iter(), "before");
+            for tokens in tokenstreams {
+                let mut types = punc_parser
+                    .parse2(tokens.clone())?
+                    .into_iter()
+                    .collect();
+                collection.append(&mut types)
             }
-            None => None,
+            collection
         };
 
-        let after =
-            match Self::extract_attr(attrs.iter(), "after")
-            {
+        let after = {
+            let mut collection = Vec::new();
+            let tokenstreams =
+                Self::extract_attr(attrs.iter(), "after");
+            for tokens in tokenstreams {
+                let mut types = punc_parser
+                    .parse2(tokens.clone())?
+                    .into_iter()
+                    .collect();
+                collection.append(&mut types)
+            }
+            collection
+        };
+
+        let lexer_hook = {
+            let mut hook =
+                Self::extract_attr(attrs.iter(), "hook");
+            match hook.next() {
                 Some(tokens) => {
-                    let types =
-                        punc_parser.parse2(tokens)?;
-                    let types = types
-                        .into_iter()
-                        .collect::<Vec<_>>();
-                    Some(types)
+                    Some(parse2::<Expr>(tokens.clone())?)
                 }
                 None => None,
-            };
-
-        let lexer_hook = match Self::extract_attr(
-            attrs.iter(),
-            "hook",
-        ) {
-            Some(tokens) => Some(parse2::<Expr>(tokens)?),
-            None => None,
+            }
         };
 
         let module_name = attrs
@@ -1443,21 +1449,6 @@ impl TryFrom<TokenStream> for LexerImpl {
         })
     }
 }
-
-// #[cfg(test)]
-// impl From<LexerImpl> for TokenStream {
-//     fn from(impl_bnf: LexerImpl) -> Self {
-//         // Create impl bnf
-//         let impl_bnf = match impl_bnf.impl_trait() {
-//             Ok(ok) => ok,
-//             Err(err) => err.into_compile_error(),
-//         };
-//
-//         quote! {
-//             #impl_bnf
-//         }
-//     }
-// }
 
 #[cfg(test)]
 mod tests;

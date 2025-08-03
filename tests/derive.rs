@@ -67,7 +67,7 @@ fn eat_before() {
 }
 
 #[test]
-fn eat_before_failt() {
+fn eat_before_fail() {
     #[derive(Lexer, Token, Debug)]
     #[before(Quote<'code>)]
     struct Trex<'code>(#[pattern = "rawr"] Buffer<'code>);
@@ -76,7 +76,7 @@ fn eat_before_failt() {
         r#"rawr i have a big head"#,
     )
     .fail()(|_, err| {
-        assert_eq!(err.kind, Kind::NotFound("Quote"))
+        assert_eq!(err.kind, Kind::NotFound(Trex::NAME))
     });
 }
 
@@ -107,7 +107,7 @@ fn eat_after_fail() {
         r#"rawr i have a big head"#,
     )
     .fail()(|_, err| {
-        assert_eq!(err.kind, Kind::NotFound("Quote"))
+        assert_eq!(err.kind, Kind::NotFound(Trex::NAME))
     });
 }
 
@@ -133,6 +133,28 @@ fn eat_around() {
 }
 
 #[test]
+fn eat_around_stacked() {
+    #[derive(Lexer, Token, Debug)]
+    struct Ra<'code>(#[pattern = "ra"] Buffer<'code>);
+
+    #[derive(Lexer, Token, Debug)]
+    #[before(Quote<'code>, Ra<'code>)]
+    #[before(Ra<'code>)]
+    #[after(Quote<'code>)]
+    struct Wr<'code>(#[pattern = "wr"] Buffer<'code>);
+
+    lexerus::TestBuild::<Wr>::new(
+        r#""rarawr" i have a big head"#,
+    )
+    .pass(Some(r#"wr"#))(|buffer, captured| {
+        assert_eq!(
+            buffer.to_string(),
+            " i have a big head"
+        );
+    });
+}
+
+#[test]
 fn no_life() {
     #[derive(Lexer, Token, Debug)]
     struct Ra<'code>(#[pattern = "ra"] Buffer<'code>);
@@ -140,13 +162,8 @@ fn no_life() {
     #[derive(Lexer, Token, Debug)]
     struct Wrap<T>(T);
 
-    // lexerus::TestBuild::<Wr>::new(
-    //     r#""rawr" i have a big head"#,
-    // )
-    // .pass(Some(r#"wr"#))(|buffer, captured| {
-    //     assert_eq!(
-    //         buffer.to_string(),
-    //         " i have a big head"
-    //     );
-    // });
+    lexerus::TestBuild::<Wrap<Ra>>::new(
+        r#"rawr i have a big head"#,
+    )
+    .pass(Some("ra"))(|_, _| {});
 }

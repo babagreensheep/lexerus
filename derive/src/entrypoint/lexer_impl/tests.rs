@@ -220,3 +220,22 @@ fn before() {
     let parse_impl = parse_impl.impl_trait_lex().unwrap();
     println!("{}", parse_impl.into_token_stream());
 }
+
+#[test]
+fn before_stack() {
+    let expr = quote! {
+        #[before(Before, Two)]
+        #[before(Three)]
+        struct Meh<'code>(#[pattern("hello", "world")] Buffer<'code>, Buffer<'code>, Char<'code>);
+    };
+
+    println!("{expr}");
+    let mut parse_impl =
+        LexerImpl::try_from(expr.clone()).unwrap();
+    let parse_impl = parse_impl.impl_trait_token().unwrap();
+    println!("{}", parse_impl.into_token_stream());
+    let mut parse_impl =
+        LexerImpl::try_from(expr.clone()).unwrap();
+    let parse_impl = parse_impl.impl_trait_lex().unwrap();
+    println!("{}", parse_impl.into_token_stream());
+}
