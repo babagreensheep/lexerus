@@ -75,9 +75,6 @@ impl<'code> std::fmt::Display for Buffer<'code> {
     }
 }
 
-#[cfg(test)]
-impl<'code> ::std::error::Error for Buffer<'code> {}
-
 impl<'code> Buffer<'code> {
     fn search_char_len(&self) -> usize {
         match self {

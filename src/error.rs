@@ -3,16 +3,32 @@ use std::fmt::Debug;
 use super::*;
 
 #[derive(Debug)]
-/// Information about the error which occured when the [Lexer::lex] failed.
+/// Information about the error which occured when the
+/// [Lexer::lex] failed.
 pub struct Error<'code> {
     pub buffer: Buffer<'code>,
-    /// This is included not just for debug information, but also to allow [lexerus_derive::Lexer]
-    /// to obtain some basic information about how many tokens were matched before the program
-    /// failed. This is useful when debugging `enum` because it would not be immediately obvious
+    /// This is included not just for debug information,
+    /// but also to allow [lexerus_derive::Lexer]
+    /// to obtain some basic information about how many
+    /// tokens were matched before the program
+    /// failed. This is useful when debugging `enum`
+    /// because it would not be immediately obvious
     /// which match pattern failed.
     pub matched: usize,
     pub kind: Kind,
 }
+
+impl<'code> ::std::fmt::Display for Error<'code> {
+    fn fmt(
+        &self,
+        f: &mut std::fmt::Formatter<'_>,
+    ) -> std::fmt::Result {
+        ::std::fmt::Debug::fmt(&self, f)
+    }
+}
+
+#[cfg(test)]
+impl<'code> ::std::error::Error for Error<'code> {}
 
 #[derive(Debug, PartialEq, Eq)]
 /// Describes the type of error found.
