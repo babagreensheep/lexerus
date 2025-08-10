@@ -1,15 +1,20 @@
-//! [Buffer] is a container for either (depending on the context) the parsed string or the unparsed
-//! string.
+//! [Buffer] is a container for either (depending on the
+//! context) the parsed string or the unparsed string.
 use std::ops::Range;
 
 #[cfg(test)]
 mod tests;
 
 #[derive(Eq, Clone)]
-/// [Buffer] is a container for source code. It is represented as an `enum` because there are two
+/// [Buffer] is a container for source code. It is
+/// represented as an `enum` because there are two
 /// forms of [Buffer] which can be created:
-/// - A _contiguous_ chunk of [str] will always be allocated as a [Buffer::Cont] and make use of the simple chunk container.
-/// - A _fragmented_ chunk will always result in a heap allocation ([Box]) of chunk to join two non-adjacent chunks to each other.
+/// - A _contiguous_ chunk of [str] will always be allocated
+///   as a [Buffer::Cont] and make use of the simple chunk
+///   container.
+/// - A _fragmented_ chunk will always result in a heap
+///   allocation ([Box]) of chunk to join two non-adjacent
+///   chunks to each other.
 pub enum Buffer<'code> {
     Cont { chunk: Chunk<'code> },
     Frag(Box<Buffer<'code>>, Box<Buffer<'code>>),
@@ -69,6 +74,9 @@ impl<'code> std::fmt::Display for Buffer<'code> {
         }
     }
 }
+
+#[cfg(test)]
+impl<'code> ::std::error::Error for Buffer<'code> {}
 
 impl<'code> Buffer<'code> {
     fn search_char_len(&self) -> usize {
@@ -319,7 +327,8 @@ impl<'code> From<Chunk<'code>> for Buffer<'code> {
 }
 
 #[derive(Eq)]
-/// Basic container for [str]. This should never be called by itself.
+/// Basic container for [str]. This should never be called
+/// by itself.
 pub struct Chunk<'code> {
     code: &'code str,
     range: Range<usize>,
